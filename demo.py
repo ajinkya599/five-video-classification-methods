@@ -32,13 +32,13 @@ def predict(data_type, seq_length, saved_model, image_shape, video_name, class_l
 
 def main():
     # model can be one of lstm, lrcn, mlp, conv_3d, c3d.
-    model = 'lstm'
+    model = 'lrcn'
     # Must be a weights file.
-    saved_model = 'data/checkpoints/lstm-features.026-0.239.hdf5'
+    saved_model = 'data/checkpoints/lrcn-images.simbi.hdf5'
     # Sequence length must match the lengh used during training.
     seq_length = 40
     # Limit must match that used during training.
-    class_limit = 4
+    class_limit = 3
 
     # Demo file. Must already be extracted & features generated (if model requires)
     # Do not include the extension.
@@ -47,12 +47,12 @@ def main():
     # TODO Make this way more useful. It should take in the path to
     # an actual video file, extract frames, generate sequences, etc.
     #video_name = 'v_Archery_g04_c02'
-    video_name = 'v_ApplyLipstick_g01_c01'
+    video_name = 'WIN_20180724_16_30_06_Pro_diff_'
 
     # Chose images or features and image shape based on network.
     if model in ['conv_3d', 'c3d', 'lrcn']:
         data_type = 'images'
-        image_shape = (80, 80, 3)
+        image_shape = (500, 500, 3)
     elif model in ['lstm', 'mlp']:
         data_type = 'features'
         image_shape = None

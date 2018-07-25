@@ -31,7 +31,7 @@ def extract_files():
         class_folders = glob.glob(os.path.join(folder, '*'))
 
         for vid_class in class_folders:
-            class_files = glob.glob(os.path.join(vid_class, '*.avi'))
+            class_files = glob.glob(os.path.join(vid_class, '*.mp4'))
 
             for video_path in class_files:
                 # Get the parts of the file.
@@ -46,7 +46,7 @@ def extract_files():
                     src = os.path.join(train_or_test, classname, filename)
                     dest = os.path.join(train_or_test, classname,
                         filename_no_ext + '-%04d.jpg')
-                    call(["ffmpeg", "-i", src, dest])
+                    call(["ffmpeg", "-i", src, "-vf", "mpdecimate,setpts=N/FRAME_RATE/TB", "-s", "700:700", dest])
 
                 # Now get how many frames it is.
                 nb_frames = get_nb_frames_for_video(video_parts)
@@ -55,9 +55,10 @@ def extract_files():
 
                 print("Generated %d frames for %s" % (nb_frames, filename_no_ext))
 
+    new_data_file = compare_images(data_file)
     with open('data_file.csv', 'w') as fout:
         writer = csv.writer(fout)
-        writer.writerows(data_file)
+        writer.writerows(new_data_file)
 
     print("Extracted and wrote %d video files." % (len(data_file)))
 
@@ -84,6 +85,40 @@ def check_already_extracted(video_parts):
     train_or_test, classname, filename_no_ext, _ = video_parts
     return bool(os.path.exists(os.path.join(train_or_test, classname,
                                filename_no_ext + '-0001.jpg')))
+
+import PIL.Image as Image
+import PIL.ImageChops as ImageChops
+ 
+def compare_images(data_file):
+    """
+    Compares to images and saves a diff image, if there
+    is a difference
+ 
+    @param: path_one: The path to the first image
+    @param: path_two: The path to the second image
+    """
+    new_data_file = []
+    for [train_or_test, classname, filename_no_ext, number_of_frames] in data_file:
+        image_one = None
+        for i in range(1, number_of_frames - 1):
+            if not image_one:
+                previous = os.path.join(os.path.dirname(__file__), train_or_test, classname, filename_no_ext + ('-{:0>4d}.jpg'.format(i)))
+                image_one = Image.open(previous)
+            
+            current = os.path.join(os.path.dirname(__file__), train_or_test, classname, filename_no_ext + ('-{:0>4d}.jpg'.format(i + 1)))
+            image_two = Image.open(current)
+
+            diff_save_location = os.path.join(os.path.dirname(__file__), train_or_test, classname, filename_no_ext + ('_diff_-{:0>4d}.jpg'.format(i)))
+
+            diff = ImageChops.difference(image_one, image_two)
+            if diff.getbbox():
+                diff.save(diff_save_location)
+
+            image_one = image_two
+        
+        new_data_file.append([train_or_test, classname, filename_no_ext + '_diff_', number_of_frames - 1])
+    
+    return new_data_file
 
 def main():
     """

@@ -37,7 +37,7 @@ class Extractor():
             self.model.layers[-1].outbound_nodes = []
 
     def extract(self, image_path):
-        img = image.load_img(image_path, target_size=(299, 299))
+        img = image.load_img(image_path, target_size=(1280, 720))
         x = image.img_to_array(img)
         x = np.expand_dims(x, axis=0)
         x = preprocess_input(x)

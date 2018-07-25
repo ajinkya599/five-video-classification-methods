@@ -48,7 +48,7 @@ class ResearchModels():
             self.model = self.lstm()
         elif model == 'lrcn':
             print("Loading CNN-LSTM model.")
-            self.input_shape = (seq_length, 80, 80, 3)
+            self.input_shape = (seq_length, 700, 700, 3)
             self.model = self.lrcn()
         elif model == 'mlp':
             print("Loading simple MLP.")

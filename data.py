@@ -32,7 +32,7 @@ def threadsafe_generator(func):
 
 class DataSet():
 
-    def __init__(self, seq_length=40, class_limit=None, image_shape=(224, 224, 3)):
+    def __init__(self, seq_length=40, class_limit=None, image_shape=(500, 500, 3)):
         """Constructor.
         seq_length = (int) the number of frames to consider
         class_limit = (int) number of classes to limit the data to.
@@ -45,9 +45,10 @@ class DataSet():
 
         # Get the data.
         self.data = self.get_data()
-
+        print("data", self.data)
         # Get the classes.
         self.classes = self.get_classes()
+        print("classes:", self.classes)
 
         # Now do some minor data cleaning.
         self.data = self.clean_data()
@@ -61,6 +62,7 @@ class DataSet():
             reader = csv.reader(fin)
             data = list(reader)
 
+        # print(data)
         return data
 
     def clean_data(self):
@@ -201,6 +203,7 @@ class DataSet():
         filename = sample[2]
         path = os.path.join(self.sequence_path, filename + '-' + str(self.seq_length) + \
             '-' + data_type + '.npy')
+        # print("Path::: " + path)
         if os.path.isfile(path):
             return np.load(path)
         else:

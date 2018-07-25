@@ -9,5 +9,9 @@ data/logs/*
 data/checkpoints/*
 data/sequences/*
 data/train/*
+data/train-old/*
+data/test-old/*
+libcudnn7*
+libnccl*
 data/test/*
 data/c3d/*

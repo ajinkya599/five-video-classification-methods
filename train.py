@@ -6,6 +6,9 @@ from models import ResearchModels
 from data import DataSet
 import time
 import os.path
+import warnings
+
+warnings.filterwarnings("always")
 
 def train(data_type, seq_length, model, saved_model=None,
           class_limit=None, image_shape=None,
@@ -13,15 +16,16 @@ def train(data_type, seq_length, model, saved_model=None,
     # Helper: Save the model.
     checkpointer = ModelCheckpoint(
         filepath=os.path.join('data', 'checkpoints', model + '-' + data_type + \
-            '.{epoch:03d}-{val_loss:.3f}.hdf5'),
+            '.simbi.hdf5'),
         verbose=1,
-        save_best_only=True)
+        save_best_only=True,
+        period=20)
 
     # Helper: TensorBoard
     tb = TensorBoard(log_dir=os.path.join('data', 'logs', model))
 
     # Helper: Stop when we stop learning.
-    early_stopper = EarlyStopping(patience=5)
+    early_stopper = EarlyStopping(patience=100)
 
     # Helper: Save results.
     timestamp = time.time()
@@ -43,7 +47,7 @@ def train(data_type, seq_length, model, saved_model=None,
 
     # Get samples per epoch.
     # Multiply by 0.7 to attempt to guess how much of data.data is the train set.
-    steps_per_epoch = (len(data.data) * 0.7) // batch_size
+    steps_per_epoch = 39;#(len(data.data) * 0.7) // batch_size
 
     if load_to_memory:
         # Get data.
@@ -66,7 +70,7 @@ def train(data_type, seq_length, model, saved_model=None,
             batch_size=batch_size,
             validation_data=(X_test, y_test),
             verbose=1,
-            callbacks=[tb, early_stopper, csv_logger],
+            callbacks=[tb, early_stopper, csv_logger, checkpointer],
             epochs=nb_epoch)
     else:
         # Use fit generator.
@@ -83,28 +87,55 @@ def train(data_type, seq_length, model, saved_model=None,
 def main():
     """These are the main training settings. Set each before running
     this file."""
+
+    # models = ['conv_3d', 'c3d', 'lrcn']
+    models = ['lrcn']
+
+    for model in models:
+        # model can be one of lstm, lrcn, mlp, conv_3d, c3d
+        # model = 'conv_3d'
+        saved_model = None  # None or weights file
+        class_limit = 3  # int, can be 1-101 or None
+        seq_length = 40
+        load_to_memory = True  # pre-load the sequences into memory
+        batch_size = 1
+        nb_epoch = 500
+
+        # Chose images or features and image shape based on network.
+        if model in ['conv_3d', 'c3d', 'lrcn']:
+            data_type = 'images'
+            image_shape = (700, 700, 3)
+        elif model in ['lstm', 'mlp']:
+            data_type = 'features'
+            image_shape = None
+        else:
+            raise ValueError("Invalid model. See train.py for options.")
+
+        train(data_type, seq_length, model, saved_model=saved_model,
+            class_limit=class_limit, image_shape=image_shape,
+            load_to_memory=load_to_memory, batch_size=batch_size, nb_epoch=nb_epoch)
     # model can be one of lstm, lrcn, mlp, conv_3d, c3d
-    model = 'lstm'
-    saved_model = None  # None or weights file
-    class_limit = None  # int, can be 1-101 or None
-    seq_length = 40
-    load_to_memory = False  # pre-load the sequences into memory
-    batch_size = 32
-    nb_epoch = 1000
+    # model = 'conv_3d'
+    # saved_model = None  # None or weights file
+    # class_limit = None  # int, can be 1-101 or None
+    # seq_length = 40
+    # load_to_memory = False  # pre-load the sequences into memory
+    # batch_size = 40
+    # nb_epoch = 5
 
-    # Chose images or features and image shape based on network.
-    if model in ['conv_3d', 'c3d', 'lrcn']:
-        data_type = 'images'
-        image_shape = (80, 80, 3)
-    elif model in ['lstm', 'mlp']:
-        data_type = 'features'
-        image_shape = None
-    else:
-        raise ValueError("Invalid model. See train.py for options.")
+    # # Chose images or features and image shape based on network.
+    # if model in ['conv_3d', 'c3d', 'lrcn']:
+    #     data_type = 'images'
+    #     image_shape = (80, 80, 3)
+    # elif model in ['lstm', 'mlp']:
+    #     data_type = 'features'
+    #     image_shape = None
+    # else:
+    #     raise ValueError("Invalid model. See train.py for options.")
 
-    train(data_type, seq_length, model, saved_model=saved_model,
-          class_limit=class_limit, image_shape=image_shape,
-          load_to_memory=load_to_memory, batch_size=batch_size, nb_epoch=nb_epoch)
+    # train(data_type, seq_length, model, saved_model=saved_model,
+    #       class_limit=class_limit, image_shape=image_shape,
+    #       load_to_memory=load_to_memory, batch_size=batch_size, nb_epoch=nb_epoch)
 
 if __name__ == '__main__':
     main()
